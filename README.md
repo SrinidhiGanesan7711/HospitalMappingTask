@@ -29,6 +29,8 @@ Many hospital records have incomplete or unstructured addresses without geograph
 
 ## 🧭 Workflow
 
+```bash
+
 graph TD
     A[User Uploads Excel File (with or without Pincode)] --> B[Script Cleans & Enriches Data]
     B --> C{Is Pincode Present?}
@@ -40,23 +42,25 @@ graph TD
     G --> H[Store Hospital Data in Database]
     H --> I[User Opens Map Interface]
     I --> J[Visualize Uploaded Hospital Locations on Map]
-
-
+```
+ 
 ▶️ Execution Steps
 ✅ Step 1: Extract Pincode and Clean Data from Excel
 Run the script manually to process the hospital data and save a cleaned Excel file:
 
 ```bash
 python pincode.py
+```
 
 This will generate Madurai.xlsx(sample) with cleaned hospital name, address, pincode, and phone number.
 
 ✅ Step 2: Start the FastAPI Application
 Use the following command to launch your FastAPI backend:
 
+
 ```bash
 uvicorn main:app --reload
-
+```
 Replace main with your actual Python file name 
 
 ✅ Step 3: Upload Excel via API
