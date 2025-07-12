@@ -29,7 +29,6 @@ Many hospital records have incomplete or unstructured addresses without geograph
 
 ## 🧭 Workflow
 
-```mermaid
 graph TD
     A[User Uploads Excel File (with or without Pincode)] --> B[Script Cleans & Enriches Data]
     B --> C{Is Pincode Present?}
