@@ -1,0 +1,1975 @@
+import pandas as pd
+import re
+import requests
+
+# hospital data
+raw_text = """
+HOSPITAL NAME	ADDRESS
+ 31. ATTUKULAM HSC
+Attukulam, ,
+ 54. ARITTAPATTY HSC
+Arittapatty, ,
+ 55. KALLAMPATTI HSC
+Kallampatti, ,
+ 73. KOTTAGUDI HSC
+Kottagudi, ,
+ A. DP HOSPITAL
+1/9,Vellayutham pillai 1st street,,Madurai
+ A.D.P HOSPITAL
+11, VELAYUTHAM PILLAI 2ND STREET, MADURAI, ,
+ A.KOKULAM HSC
+A.Kokulam, ,
+ A.R. HOSPITAL
+609, K.K. Nagar,,Madurai.,
+ A.R.HOSPITAL
+33, VALLUVAR COLONY,,MADURAI,
+ A.V.LAXMI HOSPITALS
+7/475,THENI ROAD,CHECKKANOORANI,MADURAI
+ A.VELLALAPATTI HSC
+A.Vellalapatti, ,
+ A.VELLALAPATTI PHC
+A.Vellalapatti, ,
+ AAHANA HOSPITAL
+Gandhi Nagar, ,
+ AARAV HOSPITAL
+NEW NO 138,RAMABADRAN STREET, THIRUNAGAR,MADURAI
+ AAROGYA MULTI SPECIALTY HOSPITAL
+160 , NAGU NAGAR 3RD STREET, SAMIKANNU VEETHI,BETHANIYAPURAM ,MADURAI, ,
+ AARTHI HOSPITAL
+K.Pudur, ,
+ ABI HOSPITAL
+Gomathipuram, ,
+ ABIKSHAYA HOSPITAL
+115, Subramaniyapuram 3rd Street Main Road,Jeihindhpuram,Madurai
+ ABIRAMI HOSPITAL
+T.VADIPATTI,MADURAI,
+ ACHAMPATHU HSC
+Achampathu, ,
+ ACHAMPATTI HSC
+Thirali, ,
+ ADAV HOSPITAL
+Arasaradi, ,
+ ADITHIYA HOSPITAL
+Thirunagar, ,
+ ADITYA SPECIALITY HOSPITAL
+277,GST ROAD,THIRUNAGAR,MADURAI, ,
+ AGARVAL EYE HOSPITAL
+Arasaradi, ,
+ AHANA HOSPITAL
+NO.11, SUBBURAMAN STREET, GANDHI NAGAR-20, ,
+ AHANA HOSPITAL LLP
+No.16/2A, Managiri 2nd Street,,K.K.Nagar,,Madurai
+ AHANA HOSPITALS
+NO:16/2A, MANAGIRI 2ND STREET, K.K NAGAR, MADURAI, ,
+ AJITH HOSPITAL
+27,CHITHU,BALA KRISHNA IYER LANE,KAMARAJAR SALAI,,MADURAI
+ AJITH NURSHING HOME
+27,Chitthu Balakrishnaiyer Street, Kamarajar Salai, Madurai-9, ,
+ AKSHAYA HOSPITAL
+11C, Sonaiyar Kovil street,,Narimedu,,Madurai
+ AKSHAYAA CLINIC
+NO.123,,HMS COLONY MAIN ROAD,,NEAR RAJAGANAPATHI TEMPLE, MADURAI
+ AKSHAYAA CLINIC
+NO.123, HMS COLONY MAIN ROAD, ,NEAR RAJAGANAPATHI TEMPLE,MADURAI
+ AKSHAYAA HOSPITAL
+Kochadai, ,
+ ALAM SPECILITY HOSPITAL
+3 , Kollam Pattarai Street,,Nelpettai,,Madurai.
+ ALANGAMPATTI HSC
+Karunkalakudi, ,
+ ALANGANNALLUR CHC
+Alangannallur, ,
+ ALANGANNALLUR HSC 1
+Alangannallur, ,
+ ALANGANNALLUR HSC 2
+Alangannallur, ,
+ ALLIKUNDAM HSC
+Allikundam, ,
+ ALLIKUNDAM PHC
+Allikundam, ,
+ AMBAL HOPITAL
+Reserve Line, ,
+ AMBALATHADI HSC
+Ambalathadi, ,
+ AMOOR HSC
+Amoor, ,
+ ANAIKARAIPATTI HSC
+Anaikaraipatti, ,
+ ANAND ELUMALAI HOSPITAL
+127/232, SOUTH VELI STREET, MADURAI, ,
+ ANAND PRIYA HOSPITAL
+Narimedu, ,
+ ANANDAPRIYA HOSPITAL
+Plot No. 28, Kuruvikaran Salai 1st Cross Street,Sathamangalam, Anna nagar,Madurai
+ ANANTH ELUMALAI HOSPITAL
+127/232,,South Veli Street,,Madurai
+ ANBU NURSING HOME
+10, Singarayar Colony,,South Street,,Madurai
+ ANBU HOSPITAL
+150/1, KAMARAJAR SALAI, ,MADURAI
+ ANBU NURSING HOME
+BHARATHI NAGAR MAIN ROAD,,KRISHNAPURAM COLONY, BB Kulam,,Madurai
+ ANBU NURSING HOME
+KRISHNAPURAM COLONY MAIN ROAD,MADURAI, ,
+ ANDARAKOTTARAM HSC
+Andarakottaram, ,
+ ANDIPATTI HSC
+Andipatti, ,
+ ANDREWS HOSPITAL
+9, East Park Street,,Singarayar Colony,,Madurai
+ ANITHA NURSING HOSPITAL
+461 A,ANNANAGAR,MADURAI, ,
+ ANNAD EYE HOSPITAL
+K.Pudur, ,
+ ANNAI HOSPITAL
+351, D.S.P. Nagar Main Road,,Ponmeni,,Madurai.
+ ANNAI HOSPITAL
+Arasaradi, ,
+ ANTO NURSING HOME
+10-C,PALLOTTI CHURCH STREET,THIRUNAGAR 5TH STOP,MADURAI, ,
+ ANTO NURSING HOME
+Thirunagar, ,
+ ANU NURSING HOME
+337, MIG 80 Feet Road,Anna Nagar,Madurai-20.
+ ANU NURSING HOME
+337.MIG 80FEET ROAD,ANNANAGAR,MADURAI, ,
+ ANUPPANADI CORPORATION MATERNITY HOME
+Anuppanadi,MADURAI,
+ ANUSHA MATERNITY HOSPITAL
+152/138, CHITRAKARA STREET,MADURAI,
+ APOLLO FIRST MED HOSPITALS
+484B, WEST FIRST STREET,KK NAGAR,MADURAI
+ APOLLO SPECIALITY HOSPITAL
+Lake view road,,K.K. Nagar,,Madurai.
+ AR NURSING HOME
+7,,Shairman Thulasiram street,,Madurai
+ ARASI HOSPITAL
+106,VELLAIKANNU THEATRE ROAD,,MADURAI.,
+ ARAVIND CLINIC
+325,Alagarkoil Road,,Melur ,Madurai District
+ ARAVIND EYE HOSPITALS
+1, ANNA NAGAR,MADURAI,
+ ARC International Fertility & Research centre
+No. 21/5C, Sivagangai Main Road, KK Nagar,Opp to Aavin office,,Madurai
+ ARCHANA HOSPITALS
+Athikulam, ,
+ ARISTO SPECIALITY HOSPITAL
+50B, Bye Pass Road,,Aparna Tower Opposite,,Madurai.
+ AROCKIA MULTI SPECIALITY HOSPITAL
+160, NAGU NAGAR 3RD STREET,,PETHANIYAPURAM,,MADURAI
+ AROMA HOSPITAL
+No.165A/2, Alagar Kovil Road,, ITI Bus Stop, Maudrai
+ ARULDOSSPURAM CORPORATION MATERNNITY HOME
+Thathaneri, ,
+ ARUMPANOOR HSC
+Arumpanoor, ,
+ ARUN HOSPITAL
+185,186 , Munichalai road,,Madurai.,
+ ARUN HOSPITAL
+40,43,MUNICHALAI ROAD, MADURAI-9, ,
+ ARUN HOSPITAL
+40-43/185-186,,Munichalai Road,,Madurai.
+ ARUN NURSING HOME
+4, CUSTOMS COLONY, AATHIKULAM MAIN ROAD, MADURAI, ,
+ ARUN NURSING HOME
+No: 4, Customs Colony,,Athikulam Main Road,,Madurai
+ ARUNA HOSPITAL
+Palace Road, ,
+ ARUNOTHAIYA HOSPITAL
+Mathakovil Street,K. Pudur,Madurai
+ ARVIND HEART HOSPITAL
+36, Karumpalai Main Road,Madurai,
+ ASHRITHA MULTI SPECIALITY HOSPITAL
+14/E MADURAI MAIN ROAD,SHOLAVANDHAN,MADURAI
+ ASHWIN SPECIALITY HOSPITAL
+Old No.64, New No.29,Kuruvikaran Salai, 1st Cross Street,,Anna Nagar, Madurai
+ ASHWINI HOSPITAL
+K.Pudur, ,
+ ASIRVATHAM MULTY SPECIALITY HOSPITAL
+Gandhi Nagar, ,
+ ASIRVATHAM SPECIALITY HOSPITAL
+22, RAJAJI STREET, GANDHINAGAR, MADURAI-625020, ,
+ ATCHAY SPECIALITY HOSPITAL
+378 A, GST ROAD, ,OPPOSITE TO C.S.I. SCHOOL,PASUMALAI,,MADURAI
+ ATHALAI HSC
+Athalai, ,
+ ATHANKARAIPATTI HSC
+Elumalai, ,
+ ATHIKARIPATTI HSC
+Athikaripatti, ,
+ ATHIPATTI HSC
+Athipatti, ,
+ ATTAPATTY HSC
+Attapatty, ,
+ AVALSOORANPATTI HSC
+Avalsooranpatti, ,
+ AVN AROGYA AYURVEDIC HOSPITAL
+175, Vilachery Main Road,,Muniyandipuram P.O.,Madurai
+ AVSS HOSPITAL
+32-A, Kuruvikaran Salai,Madurai ,
+ AVSS HOSPITAL ADVANCED TRAUMA CENTRE
+32A, KURUVIKARAN SALAI MADURAI-9, ,
+ AVVAI HOSPITAL
+Thirumangalam, ,
+ AVVAI JANAKI HOSPITAL
+Arasaradi, ,
+ AYLANGUDI PHC
+Othakadai, ,
+ AYYANARKULAM HSC
+Ayyanarkulam, ,
+ AYYANKOTTAI HSC
+Ayyankottai, ,
+ AYYANKOTTAI PHC
+Ayyankottai, ,
+ AYYAPATTI HSC
+Ayyapatti, ,
+ AYYAPPANAICKENPATTI HSC
+Ayyappanaickenpatti, ,
+ AYYUR HSC
+Ayyur, ,
+ AZHAGAPURI HSC
+Azhagapuri, ,
+ Aathur Asirvatham Hospital
+42A,Kuruvikkaran Salai,Madurai-20
+ Anandraj Hospital
+3/756, First cross street,sarveyar colony, K.Pudur,Madurai
+ Anantha Priya Hospital
+28, Kuruvikaran Salai 1st Cross street,Sathamangalam,Madurai
+ Anitha Nursing Home
+461/A,,Anna Nagar,Madurai - 20.
+ Aravind Eye Hospital
+1,Anna Nagar,Madurai-20
+ Arun Hospital
+40-43, Munichalai Road, ,Madurai,
+ Avaniyapuram Urban Primary Health Centre
+Kamarajnagar, Near Bus Stop,Bypass Road, Avaniyapuram,Madurai
+ B METTUPATTI HSC
+B Mettupatti, ,
+ B.M HOSPITAL
+Arasaradi, ,
+ BALA HOSPITAL
+Usilampatti, ,
+ BALAJI KIDNEY CENTRE
+107-A /1, VAIGAI COLONY, NEAR AMBIKA THEATRE,ANNA NAGAR,MADURAI
+ BALARATHNA HOSPITAL
+No.3/55D4D,,Colector Colony, K.K.Nagar,,Madurai
+ BASKAR HOSPITAL
+307, 6th Main Road,,Gomathipuram,,Madurai.
+ BASKARAN CLINIC
+Melur, ,
+ BB Kulam Urban Primary Health Centre
+BB Kulam,Meenambalpuram,Madurai
+ BGM HOSPITAL
+Reserve Line, ,
+ BHARATHI HEART CENTRE
+184-3RD,NORTH CROSS STREET,ANNANAGAR,MADURAI, ,
+ BHARATHI HOSPITAL
+K.Pudur, ,
+ BHARATHI INFINITY HOSPITAL
+No 19/28 , Illandaikulam,Madurai.,
+ BHARATHY HOSPITAL
+68, KANAGAVEL NAGAR,,OFFICERS TOWN, MEENAMBALPURAM,,MADURAI
+ BLISSFULL MIND WELLNESS RESEARCH HOSPITALS
+14, PATTUKOTTAI KALYANA SUNDARAM STREET,ARUL NAGAR, BYE BASS ROAD, ,NEXT SUN DRIVING SCHOOL, MADURAI
+ BLUE MODERN HOSPITAL
+75B,Munichalai Road,Madurai,
+ BOOMA NURSING HOME
+22, GOKHALE ROAD,,MADURAI,
+ BOOPATHIYAMMAL HOSPITAL
+Usilampatti, ,
+ BOOTHAKUDI HSC
+Boothakudi, ,
+ BOOTHAMANGALAM HSC
+Boothamangalam, ,
+ BOOTHIPURAM HSC
+Boothipuram, ,
+ BOSE HOSPITAL
+Munichalai, ,
+ BRIGHT HOSPITAL
+22, Dr. Thangaraj Salai,,K.K.Nagar,,Madurai
+ BYKARA URBAN PRIMARY HEALTH CENTER
+EB MAIN ROAD,BYKARA,MADURAI
+ Balaji Multispeciality Hospital
+95,Palam Station Road,Sellur,Madurai
+ Balarangapuram Government Hospital
+Balarengapuram,Madurai,
+ Bharathi Heart Centre
+184, 3rd North cross street,Anna nagar,Madurai
+ C.PUDUR HSC
+Chitalangudi, ,
+ CEMACS HOSPITAL
+Gandhi Nagar, ,
+ CHANDRA BAI HOSPITAL
+93/44, Partha Sarathi Street,,S.S. Colony,,Madurai.
+ CHANDRA HOSPITAL
+10, Pillaiyarpalayam Road,South Gate,Madurai
+ CHANDRA HOSPITAL
+Therkku vasal , ,
+ CHANDRA NURSING HOME
+Melur, ,
+ CHECKANURANI CHC
+Checkanurani , ,
+ CHELLAMPATTI CHC
+Chellampatti, ,
+ CHETTIKULAM HSC
+Thirumalpuram, ,
+ CHETTIYAPATTI HSC
+Doddappanayakkanur, ,
+ CHETTIYARPATTI HSC
+Chettiyarpatti, ,
+ CHIDAMBARAM MEMORIAL HOSPITAL
+Subramaniyapuram, ,
+ CHIDAMBARAMPATTI HSC
+Othakadai, ,
+ CHINNAPATTI HSC
+Chinnapatti, ,
+ CHINTHAMANI URBAN PRIMARY HEALTH CENTRE
+Manthayamman Koil Street,,Madurai.,
+ CHITALANGUDI HSC
+Chitalangudi, ,
+ CHITALANGUDI PHC
+Chitalangudi, ,
+ CHITHIREDDIPATTI HSC
+Sowdarpatti, ,
+ CHITTULOTTI HSC
+Chittulotti, ,
+ CHOCKKALINGAPURAM HSC
+Chockkalingapuram, ,
+ CHOKAMPATTY HSC
+Chokampatty, ,
+ CHRISTIAN MISSION HOSPITAL
+Thirumalainanayakar Mahal, ,
+ CRESCENT HOSPITAL
+37/1, Sivagangai Road,,K.K. Nagar,,Madurai.
+ DAVASAHAYAM CHETTIAR CORPORATION MATERNITY HOME
+Arasaradi, ,
+ DEEP HOSPITAL
+K.Pudur, ,
+ DEEPAK NURSHING HOME
+129B , PONMENI MAIN ROAD, SAMMATIPURAM ,MADURAI, ,
+ DEEPAK NURSING HOME
+129-B,Ponmeni Main Road,,Madurai.,
+ DEVADOSS HOSPITAL
+K.Pudur, ,
+ DEVAKI SPECIALITY HOSPITAL
+26,THENI MAIN ROAD,,ARASARADI,,MADURAI
+ DEVASAHAYAM CHETTIAR CORPORATION MATERNITY HOME
+NEW JAIL ROAD,MADURAI,
+ DEVASAHAYAM CHETTIYAR CORPORATION MAT HOME
+NEW JAIL ROAD MADURAI , ,
+ DEVI CLINIC & NURSING HOME
+17-A, KAJA STREET, SOUTHVELI STREET, MADURAI, ,
+ DEVI HOSPITAL
+15, AATHIKULAM MAIN ROAD, MADURAI, ,
+ DEVI HOSPITAL
+15, Athikulam Main Road,,Madurai,
+ DEVI NURSING HOME
+17 A, Kaja Street,,Madurai,
+ DEVIPRIYA HOSPITAL
+Usilampatti, ,
+ DHARSHINI HOSPITAL
+K.Pudur, ,
+ DHARUN CLINIC
+2430, TNHB colony,,Madurai,
+ DHIRAVIYAM PILLAI HOSPITAL
+Therkku vasal , ,
+ DHUVARAHAN CLINIC
+Melur, ,
+ DINESH NURSING HOME
+6-1-33, West Street,,Viswanathapuram,,Madurai District
+ DIVYA MULTI SPECIALITY HOSPITAL
+511B,OPP TO ASSISI HALL ST.JOHN BRITTO CHURCH,MELUR MAIN ROAD,Y.OTHAKADAI,MADURAI
+ DODDAPPANAYAKKANUR CHC
+Doddappanayakkanur, ,
+ DODDAPPANAYAKKANUR HSC
+Doddappanayakkanur, ,
+ DR S SUTHARSINI MANI HOSPITAL
+No 5 Raman Street,Thirunagar ,Madurai
+ DR,MADHAVANS HEART CENTRE PRIVATE LIMITED
+3/424, Sivagangai Main Road,,2nd and 3rd Floor Vikram Hospital Premises,Ring Road,,Pandikoil Junction, Madurai.
+ DR. NAVAMANI PRABHAKARAN NURSING HOME
+Arasaradi, ,
+ DR. THANGARAJ HOSPITAL
+Dr. Thangaraj Road,,Vinayagar Nagar,,Madurai
+ DR.RAO SERVICE HOSPITAL
+59, Channel Road,,Melur,,Madurai District
+ Dr. SVR Speciality Hospital
+348, 350 TNHB Colony, Pudhu Nagar,Villapuram,Madurai
+ E.KOTTAIPATTI HSC
+E.Kottaipatti, ,
+ E.PERUMALPATTI HSC
+E.Perumalpatti, ,
+ EASVARA HOSPITAL
+1-B, OLD POST OFFICE ROAD, NEAR PERUMAL KOVIL GROUND, TALLAKULAM, MADURAI, ,
+ EASVARA HOSPITAL
+1-B, Old Post Office Road,,Thallakulam,,Madurai.
+ EASVARAN HOSPITAL
+1-B, Old Post Office Road,,Thallakulam,,Madurai.
+ ELUMALAI CHC
+Elumalai, ,
+ ELUMALAI HSC
+Elumalai, ,
+ EOC CORPORATION MATERAITY HOME
+S.S Colony, ,
+ EOC CORPORATION MATERNITY HOME
+T B,ROAD ARASARADI MADURAI , ,
+ ERRAMPATTI HSC
+Errampatti , ,
+ ESI HOSPITAL
+Thathaneri, ,
+ ESI Hospital
+Thathaneri Main Road,Thathaneri,Madurai
+ ETTIMANGALAM HSC
+Ettimangalam, ,
+ FAMILY PALNNING ASSOCIATION OF INDIA
+Arasaradi, ,
+ FATHIMA HOSPITAL
+26,SENGULAM EAST STREET,SOLAVANTHAN ROAD, THIRUMANGALAM,MADURAI
+ FATHIMA NAGAR CORPORATION MATERNITY HOME
+Arasaradi, ,
+ FENN HOSPITAL
+5, E2E2, Road Chinna Chokkikulam,, ,Madurai
+ G V R HOSPITAL
+2/209, IInd Main Road, ,Gomathipuram,MADURAI
+ G.N.M Nursing Home
+28 , West Ponnagaram ,8th Street, Arapalayam.,Madurai.
+ G.N.M.HOSPITAL
+Arasaradi, ,
+ G.S.HOSPITAL
+15/9, RAMNAD ROAD,,IRAVATHANALLUR,,MADURAI
+ G.V. HOSPITAL
+Arasaradi, ,
+ G.V. HOSPITAL
+No. 1, Suresh Street, nadaraj nagar,Kochadai,Madurai
+ G.V.R. Hospital
+2/209, 2nd Main Road,Gomathipuram,Madurai-20.
+ GANAESH HOSPITAL
+Therkku vasal , ,
+ GANAESH NURSING HOME
+Head Post Office North Veli St, ,
+ GANASH PRIYA HOSPITAL
+194, Bye Pass Road,,Madurai.,
+ GANGA HOSPITAL
+Subramaniyapuram, ,
+ GAYATHRI HOSPITAL
+Arasaradi, ,
+ GEETHA NURSING HOME
+Munichalai, ,
+ GENEZEN INDUS HOSPITAL
+33,P T Nagar Main Road,,Valluvar Colony,,Madurai.
+ GOKULAM CLINIC
+Y.Othakadai, ,
+ GOUTHAM HOSPITAL
+133,KALYANA VINAYAGAR KOVIL STREET,PANDIAN NAGAR,THIRUNAGAR,MADURAI, ,
+ GOVERNMENT HEAD QUARTERS HOSPITAL
+Usilampatti, ,
+ GOVERNMENT INFECTIVE DISEASE HOSPITAL
+Thoppur, ,
+ GOVERNMENT RAJAJI HOSPITAL
+Gandhi Nagar,Madurai,
+ GOVT. RAJAJI HOSPITAL
+Gandhi Nagar, ,
+ GOWRI BAI CLINIC
+Palanganatham, ,
+ GOWRI HEALTH CARE CENTRE
+95B, P and T Nagar Road,,Thiruvalluvar Colony,,Madurai.
+ GOWRI NURSING HOME
+Subramaniyapuram, ,
+ GOWTHAM HOSPITAL
+133, Kalyana vinayakar kovil street,Pandiyan Nagar, Thirunagar,Madurai
+ GRACE KENNETT FOUNDATION HOSPITAL
+8,,KENNETT ROAD,,MADURAI
+ GRACE NURSING HOME
+7,SARVODHAYA FIRST CROSS STREET NEW ELLIS NAGAR MADURAI , ,
+ GRACE NURSING HOME
+7,SARVOTHYA 1ST CROSS STREET NEW,,ELLIS NAGAR,,MADURAI
+ GRACHAND NURSING HOME
+Arasaradi, ,
+ GUARDIAN HOSPITAL
+22, KAKKAN STREET,SHENOY NAGAR, MADURAI-625020, ,
+ GUARDIAN HOSPITAL
+Gandhi Nagar, ,
+ GUNASUNDARI BOSE HOSPITAL
+46, C.M.R ROAD, MADURAI, ,
+ GURU HOSPITAL
+4/120F, Pandi Kovil Ring Road,,Madurai.,
+ Guru Hospital
+197,Madurai Road,Usilampatti,Madurai District
+ HANNAH JOSEPH HOSPITAL
+134, Lake view road,,K.K. Nagar,,Madurai.
+ HARISH HOSPITAL
+90-B/12, VOC STREET, ,ARUL NAGAR, BYE BASS ROAD, ,MADURAI
+ HARLEY RRAM NURSING HOME
+43-A, Krishnarayar Theppakulam Street,MADURAI,
+ HARSHINI HOSPITAL
+10, SIVAGANGAI MAIN ROAD,NEAR ANNA BUS STAND, SATHAMANGALAM,,MADURAI
+ HARSHITHA HOSPITAL
+128/1, ABC, 129/3B,Aruppukottai Main road,,Madurai
+ HARSHITHA HOSPITAL
+Head Post Office North Veli St, ,
+ HEMA MEDICAL CENTRE
+490,,K.K.Nagar,,Madurai
+ Habiba Speciality Hospital
+157/5, Vivekanandar Main Road,,Tahsildar Nagar,Madurai-20.
+ Hannah Joseph Hospital
+RS No 115/3B2 and 116/1A2, Madurai Tuticorin Ring Road,Chinthamani,MADURAI
+ IDAYAPATTI HSC
+Amoor, ,
+ ILAKKUVANAR MENTAL HEALTH CENTRE
+25, Alagar Kovil Road,,K.Pudur, Madurai.,
+ INFANT JESUS HOSPITAL
+105,106,South Veli Street,,Madurai
+ INIYA HOSPITAL
+802, A/1, Annai Nagar,,Vandiyur Main Road,,Madurai-20.
+ IRUMBADI HSC
+Irumbadi, ,
+ ISWARYA FERTILITY CENTRE
+70, KENNET CROSS STREET,ELLIS NAGAR, NEAR PERIYAR BUS STAND ,MADURAI
+ ISWARYA HOSPITAL
+2/3,S.B.I. Colony,,3rd Street, Ponmeni,Madurai.
+ Indira Hospital
+2/150 Iyer Bungalow,New Natham Road,Madurai
+ Indus Hospital Private Limited
+No.33, P and T Nagar Main Road,Valluvar Colony,MADURAI
+ J.ANITHA HOSPITAL
+THANAKKANKULAM,THIRUPPARANKUNDRAM,MADURAI
+ J.C.GANESAN HOSPITAL
+K.Pudur, ,
+ J.K.HOSPITAL
+K.Pudur, ,
+ J.S.Nursing Home
+2/258 Mela Kallandri ,Alagar koil Road,Madurai
+ J.S.R.HOSPITAL
+334/13,,MUTHAMIL NAGAR,ALAGAR KOVIL ROAD,MELUR
+ JAICARE HOSPITAL
+452, Mandela Nagar,,P.T.C Post, Near Madurai Airport,,Madurai.
+ JAISEE HOSPITAL
+38, Valluvar Street,,S.S. Colony,,Madurai.
+ JANET HOSPITAL
+18,HARVEY NAGAR 1ST STREET,,ARASARADI,,MADURAI
+ JAYAM HOSPITAL
+3, ABDUL KABARKHAN STREET, CHINNA CHOKKIKULAM, MADURAI, ,
+ JEBAM HOSPITAL
+13, THENI MAIN ROAD,,ARASARADI,,MADURAI
+ JEEVA JANAGI HOSPITAL
+785, ANNA NAGAR MADURAI, ,
+ JEYA HOSPITAL
+Thirunagar, ,
+ JEYAM CLINIC
+PERIYUR TALUK,T.KALLUPATTI,
+ JEYAM HOSPITAL
+3, Abdul Gafar Khan Street,,Chinna chokkikulam,,Madurai
+ JEYAM HOSPITAL
+47 - D Bank Road.,,Melur ,Madurai District
+ JEYAN HOSPITAL
+178/A,KAMARAJAR SALAI,MADURAI
+ JEYAN HOSPITAL
+43/1, VENKATAPATHY IYENGAR,STREETKAMARAJAR SALAI,,MADURAI
+ JEYARAM HOSPITAL
+Arasaradi, ,
+ Jas Speciality Hospital
+18C/1, Kennet Cross Road,,New Ellis Nagar,,Madurai.
+ Jawahar Clinic
+Asaiva Saravana hotel Backside,Near Peraiyur Bus Stand,Peraiyur
+ Jeeva Janagi Hospital
+785,Anna Nagar,Madurai-20
+ Jeyalakshmi Hospital
+Mariamman Kovil Sannathi Street ,Sholavandhan,Madurai
+ K.K HOSPITAL
+Arasaradi, ,
+ K.K. HOSPITAL
+37 , DSP NAGAR 3RD STREET,MADURAI, ,
+ K.NATTAPATTY HSC
+K.Nattapatty, ,
+ K.NATTAPATTY PHC
+K.Nattapatty, ,
+ K.PUDUR CORPORATION MATERNITY HOME
+K.Pudur, ,
+ K.PULIYANKULAM HSC
+K.Puliyankulam, ,
+ K.VELLAKULAM HSC
+K.Vellakulam, ,
+ KACHIRAYANPATTI HSC
+Kachirayanpatti, ,
+ KADANERI HSC
+Kadaneri, ,
+ KADHAKINARU HSC
+Kadhakinaru, ,
+ KADUPATTI HSC
+Kadupatti, ,
+ KALAIVANAN CORPORATION MAT. HOME
+Arasaradi, ,
+ KALIGAMBAL HOSPITAL
+5/1/34 MAIN ROAD,NEERETHAN,VADIPATTI,MADURAI
+ KALIMANGALAM HSC
+Kalimangalam, ,
+ KALIMANGALAM PHC
+Kalimangalam, ,
+ KALLANAI HSC
+Kallanai, ,
+ KALLANDIRI CHC
+Kallandiri, ,
+ KALLANDIRI HSC
+Kallandiri, ,
+ KALLAPATTI HSC
+Veppanoothu , ,
+ KALLIGUDI CHC
+Kalligudi, ,
+ KALLUTHU HSC
+Kalluthu, ,
+ KAMATCHI VASANTHAM HOSPITAL
+Therkku vasal , ,
+ KAMBUR HSC
+Kambur, ,
+ KANCHARAMPETTAI PHC
+Kancharampettai, ,
+ KANDAI HSC
+Kandai, ,
+ KANNA HOSPITAL
+No: 1, Palanisamy Nagar,,Reserve Line,,Madurai.
+ KANNANUR HSC
+Kannanur, ,
+ KARADIKAL HSC
+Karadikal, ,
+ KARISALKULAM URBAN PRIMARY HEALTH CENTER
+ANNA MAIN STREET,KARISALKULAM,MADURAI
+ KARPAGAM HOSPITAL
+11A, Prasad Road, Narimedu,, ,Madurai
+ KARTHIK HOSPITAL
+Gandhi Nagar, ,
+ KARUMATHUR HSC
+Karumathur, ,
+ KARUNAI HOSPITAL
+Narimedu, ,
+ KARUNAI MULTI SPECIALITY HOSPITAL
+202, NETHAJI MAIN ROAD,,BIBIKULAM,,Madurai
+ KARUNKALAKUDI CHC
+Karunkalakudi, ,
+ KARUNKALAKUDI HSC
+Karunkalakudi, ,
+ KARUPPATTI HSC
+Karuppatti, ,
+ KARUPPAURANI HSC
+Karuppaurani, ,
+ KASI CLINIC
+145/A,Kamarajar Salai,,Madurai.,
+ KASTHURI HOSPITAL
+Silaiman , ,
+ KASTHURI PRIYA SPECIALITY HOSPITAL
+Melur, ,
+ KASTHURIBAI CLINIC
+Thirumangalam, ,
+ KATCHAIKATTI HSC
+Katchaikatti, ,
+ KATCHAIKATTI HSC
+SeminiPatti, ,
+ KATCHAKATTI CHC
+Katchakatti, ,
+ KATCHAKATTI HSC
+Katchakatti, ,
+ KEELA KALLANDIRI HSC
+Kallandiri, ,
+ KEELAIYUR HSC
+Keelaiyur, ,
+ KEELAKUILKUDI HSC
+N.P.Kottai , ,
+ KEELAMATHUR HSC
+Keelamathur, ,
+ KEELAVALAVU HSC
+Keelavalavu, ,
+ KEELAVALAVU PHC
+Keelavalavu, ,
+ KEERTHI HOSPITAL
+75/4, Dinamalar Avenue,,Madurai.,
+ KENNADY CORPORATION MATERNITY HOME
+Munichalai, ,
+ KESAMPATTI HSC
+Kesampatti, ,
+ KIDARIPATTI HSC
+Kidaripatti, ,
+ KILAVANERI HSC
+Kilavaneri, ,
+ KIRUBA HOSPITAL
+133, East 2nd main Road,Anna Nagar,Madurai
+ KIRUBA HOSPITAL
+38/133, Annanagar East II Main road,,Annanagar,,Madurai.
+ KIRUBA HOSPITAL
+38/133,ANNANAGAR EAST 2ND MAIN ROAD,ANNANAGAR,MADURAI, ,
+ KIRUBA HOSPITAL
+678, FISHER LANE,,KAMARAJAR SALAI,,MADURAI
+ KIRUBA HOSPITAL
+Fisher Lane, Kamarajar Salai, Madurai - 625009, ,
+ KIRUTHIKA HOSPITAL
+Head Post Office North Veli St, ,
+ KISHORE HOSPITAL
+PLOT NO. 7, ARUPPUKOTTAI MAIN ROAD,PARASAKTHI NAGAR, VILLAPURAM,MADURAI
+ KJS SPECIALITY HOSPITAL
+Plot No7, Karpaga Nagar 8th Street,K. Puthur,Madurai
+ KODIKULAM HSC
+Othakadai, ,
+ KODIKULAM URBAN PRIMARY HEALTH CENTRE
+ANANDARAJ NAGAR,S.KODIKULAM,K.PUDUR
+ KODIMANGALAM HSC
+Kodimangalam, ,
+ KODUKKAMPATTI HSC
+Kodukkampatti, ,
+ KONDAIYAMPATTI HSC
+Kondaiyampatti, ,
+ KONGAMPATTI HSC
+Kongampatti, ,
+ KOODAKOVIL HSC
+Koodakovil, ,
+ KOODAKOVIL PHC
+Koodakovil, ,
+ KOOTHIYARKUNDU HSC
+Vedar Puliyankulam, ,
+ KOTTAMPATTI HSC
+Kottampatti, ,
+ KOTTAMPATTI PHC
+Kottampatti, ,
+ KOTTANATHAMPATTI HSC
+Kottanathampatti, ,
+ KOVILANGULAM HSC
+Kovilangulam, ,
+ KOVILPAPPAKUDI HSC
+Kovilpappakudi, ,
+ KOVILPAPPAKUDI PHC
+Kovilpappakudi, ,
+ KOZHIKUDI HSC
+Ilamanur, ,
+ KRS NULIFE HOSPITALS PVT LTD.
+38-D, 1ST CROSS, EAST MAIN ROAD,ANNA NAGAR,MADURAI
+ KULAMANGALAM HSC
+Kulamangalam, ,
+ KULAMANGALAM PHC
+Kulamangalam, ,
+ KUMARAN GASTRO & MATERNITY HOSPITAL
+206 V, East Marret Street,Madurai,
+ KUMARAN GASTRO MATERNITY AND SPECIALITY HOSPITAL
+No.2, Parasuramanpatti Main Road,,Moondrumavadi,,K Pudur, Madurai.
+ KUMARAN HOSPITAL
+Usilampatti, ,
+ KUMARAPURAM HSC
+Kumarapuram, ,
+ KUNNATHUR HSC
+Kunnathur, ,
+ KURAYUR HSC
+Kurayur, ,
+ KURIAN MATERNITY HOSPITAL
+1/A, VELAYUTHAM PILLAI 2ND LANE, SOUTH VELI STREET, MADURAI, ,
+ KURIANS MATERNITY NURSING HOME
+1/9,,Velayutham pillai 2nd street,,Madurai
+ KURUCHIPATTI HSC
+Kuruchipatti, ,
+ KURUVITHURAI HSC
+Kuruvithurai, ,
+ KUTLADAMPATTI HSC
+Kutladampatti, ,
+ KUTTIMAIKIPATTY HSC
+Kuttimaikipatty, ,
+ KannaHospital
+Main Road,Gatekadai,Alanganallur
+ Karunai Multispeciality Hospital
+202, Nethaji Main Road,,BB Kulam, ,Madurai
+ Krishna Hospital
+28C1, Pulipandiyan Street,,Jaihindhpuram,,Madurai.
+ L.KOTTANIPATTI HSC
+L.Kottanipatti, ,
+ L.P.HOSPITAL
+Palanganatham, ,
+ LADY WILLINGDON CORPORATION MATERNITY HOME
+Krishnarayar Theppakulam Street, ,MADURAI
+ LAKSHMANA MULTI SPECIALITY HOSPITAL
+23,TPK ROAD,PYKARA,MADURAI, ,
+ LAKSHMI HOSPITAL
+No.7, Sonaiyar Kovil Street,,Narimedu,,Madurai
+ LAKSHMI GASTRO CARE AND LAPAROSCOPY HOSPITAL
+68A, Aruppukottai Main Road,Meenakshi Nagar,Villapuram, Madurai
+ LAKSHMI HOSPITAL
+3, Race course , Chokkikulam, ,Madurai
+ LAKSHMI HOSPITAL
+Lakshmi Hospital, Peraiyur Road,Usilampatti ,
+ LAKSHMI NURSING HOME
+Melur, ,
+ LAKSHMI SPECIALITY HOSPITAL
+9,S.S.V SALA ROAD, ,MELUR,
+ LAKSHMNA HOSPITAL
+Palanganatham, ,
+ LEE KIDNEY CARE
+Palanganatham, ,
+ LEONARD HOSPITAL
+38, Singarayar Velar Street,,K. Pudur,,Madurai
+ LEVINS DIABETES AND DENTAL SPECIALITY HOSPITAL
+plot no 555, Karpaga Nagar,14th Street, K.Pudur,Madurai
+ LIFE CARE HOSPITAL
+10/4A,70 FEET ROAD NEW ELLIS NAGAR (RTO OFFICE OPP RD)MADURAI, ,
+ LIFE CARE HOSPITAL
+Arasaradi, ,
+ LILY MISSION HOSPITAL
+Plot No 6, Karpaga Nagar 8th Street,,Alagarkovil Main Road,,Madurai.
+ LP ANANDH HOSPITAL
+52, Main Road,Palanganatham,Madurai
+ Leela Hospital
+394, Anna Nagar,,Madurai-20.,
+ M KALLUPATTI HSC
+Mallappuram, ,
+ M.KALLUPATTI HSC
+Mathippanur , ,
+ M.PULIYAKULAM HSC
+M.Puliyakulam, ,
+ M.SENGULAM HSC
+M.Sengulam, ,
+ M.SUBBULAPURAM HSC
+Modagam, ,
+ M.SUBBULAPURAM PHC
+M.Subbulapuram, ,
+ M.VELLALAPATTI HSC
+M.Vellalapatti, ,
+ MADURAI CANCER CENTRE
+Head Post Office North Veli St, ,
+ MADURAI CITY HOSPITAL
+34, Sivagangai road,,Opp to Milk Project,,Madurai.
+ MADURAI HEALTH CENTRE
+No 28, VSV Complex,,TB Road, Arasaradi,,Madurai.
+ MADURAI HEART CENTER
+Arasaradi, ,
+ MADURAI INSTITUTE OF ORTHOPAEDICS AND TRAUMATOCOSY HOSPITAL
+629, K.K.Nagar,,Madurai,
+ MADURAI KIDNEY CENTER
+Gandhi Nagar, ,
+ MADURAI KIDNEY CENTRE & TRANSPLANTATIION RESEARCH INSTITUTE
+6/6, B2, SIVAGANGAI ROAD, MANAGIRI, MADURAI, ,
+ MADURAI SIVAKASI NADARS URAVINMURAI HOSPITAL
+45, CHITRAKARA STREET,MADURAI,
+ MAHATMA BRAIN & SPIN CENTRE
+430, K.K.Nagar,,Madurai,
+ MAHILCHI HOSPITAL
+178A,KAMARAJAR SALAI,MADURAI,
+ MAITTANPATTI HSC
+Maittanpatti, ,
+ MAITTANPATTI HSC
+Maittanpatti , ,
+ MALAIPATTY HSC
+Nackkalapatti, ,
+ MALAR HOSPITAL
+Anjal Nagar 3rd Street,Opp. to Indian Bank, Koodal Nagar,Madurai
+ MALLAPPURAM HSC
+Mallappuram, ,
+ MANALMETUPATTI HSC
+Chockkalingapuram, ,
+ MANAPATTI HSC
+Manapatti, ,
+ MANASA HOSPITAL
+Thathaneri, ,
+ MANGALAMPATTI HSC
+Ayyapatti, ,
+ MANGULAM HSC
+Mangulam, ,
+ MANGULAM HSC
+Mangulam , ,
+ MANI CORPORATION MATERNITY HOSPITAL
+35, SOUTH MASI STREET,MADURAI,
+ MANI HOSPITAL
+5,RAMAN STREET,THIRUNAGAR,MADURAI, ,
+ MANI HOSPITAL
+Thirunagar, ,
+ MANICKAMPATTI HSC
+Manickampatti, ,
+ MANIYANJI HSC
+Maniyanji, ,
+ MANJARIE HOSPITAL
+R,270-D,GST ROAD, THIRUNAGAR 2ND STOP,MADURAI, ,
+ MANJARIE HOSPITAL
+Thirunagar, ,
+ MANNADIMANGALAM HSC
+Mannadimangalam, ,
+ MANNADIMANGALAM PHC
+Mannadimangalam, ,
+ MARAVAPATTI HSC
+Rajakkal patty, ,
+ MARIRAM HOSPITAL
+8/7/3/1,T.Vadipatti,L.Pudur, Madurai
+ MARIYA CLINIC
+105, Ganapathy Nagar,,Villapuram,,Madurai
+ MARKS HOSPITAL
+Plot no: 43,,Ramalakshmi Nagar,,K.Pudur, Madurai
+ MARUTHANKUDI HSC
+Maruthankudi, ,
+ MARUTI MULTI SPECIALITY HOSPITAL
+K.Pudur, ,
+ MATERNITY CHILD HEALTH CLINIC
+Thirumangalam, ,
+ MATHI HOSPITAL
+261-4A1,4B Theni Main Road,Usilampatti,
+ MATHI HOSPITAL
+261/4A1,4B,THENI MAIN ROAD,USILAMPATTI,MADURAI
+ MATHUR HSC
+Mathur, ,
+ MAVILIPATTI HSC
+Kinnimangalam, ,
+ MEDS CARE HOSPITAL
+VELAMMAL NAGAR,THIRUMOHOOR ROAD,Y.OTHAKADAI
+ MEDS CLINIC
+SUTHANTHIRA NAGAR,Y.OTHAKADAI,MADURAI
+ MEENAKSHI MISSION HOSPITAL AND RESEARCH CENTRE
+Uthangudi,,Madurai.,
+ MEENAKSHI SUPER SPECIALITY HOSPITAL
+171, Lake Area,,Melur Road,,Madurai.
+ MEIKKILARPATTI HSC
+Meikkilarpatti, ,
+ MELAKKAL HSC
+Melakkal, ,
+ MELAKKAL PHC
+Melakkal, ,
+ MELAKOTTAI HSC
+Melakottai, ,
+ MELAVALAVOO HSC
+Melavalavoo, ,
+ MELUR GH
+Melur, ,
+ MELUR MEDICAL CENTRE
+Melur, ,
+ MELUR UPHC
+Melur, ,
+ MERCY HOSPITAL
+4/1, Byepass Road,,Madurai,
+ METTUNEERATHAN HSC
+T.Vadipatti, ,
+ MODERN HOSPITAL
+Palanganatham, ,
+ MOHAN HOSPITAL
+Palace Road, ,
+ MOHAN S MEDICITY
+11-A, Vinayaga Nagar Opp. District court,,K.K. Nagar,,Madurai.
+ MOHAN S MEDICITY HOSPITAL
+11-A, VINAYAGA NAGAR, OPP.DISTRICT COURT, KK NAGAR, MADURAI, ,
+ MOMS CLINIC
+NO 6 ,8,CHRISTIYA MANGALAM ST.OPP SBI,MADURAI ROAD,TIRUMANGALAM
+ MOORTHI HOSPITAL
+Usilampatti, ,
+ MUDHALAIKULAM HSC
+Mudhalaikulam , ,
+ MUDUVARPATTY HSC
+Muduvarpatty, ,
+ MUDUVARPATTY PHC
+Muduvarpatty, ,
+ MULLIPALLAM HSC
+Mullipallam, ,
+ MUNICHALAI CORPORATION MATERNITY HOME
+Head Post Office North Veli St, ,
+ MUTHU HOSPITAL
+11, Krishna Rao Tank Street, ,Madurai,
+ MUTHUVEL HOSPITAL
+858/E ,Madurai Main Road,Melur
+ Meenatchi Sugam Hospital
+33/22, Vasuki Street,,Ganapathy Nagar,,Villapuram.
+ Mithra Hospital
+22, Sivagangai Road,Sathamangalam,Madurai-20
+ N.P.KOTTAI HSC 1
+N.P.Kottai, ,
+ N.P.KOTTAI HSC 2
+N.P.Kottai , ,
+ N.P.KOTTAI PHC
+N.P.Kottai , ,
+ NACKKALAPATTI HSC
+Nackkalapatti, ,
+ NALLA PERUMALPATTI HSC
+Thidiyan, ,
+ NALLIYATHEVANPATTI HSC
+Nalliyathevanpatti , ,
+ NALLU THEVAN PATTI HSC
+Nallu thevan patti , ,
+ NANTHINI NURSING HOME
+Subramaniyapuram, ,
+ NARASINGAM HSC
+Othakadai, ,
+ NARIYAMPATTI HSC
+Vikkiramangalam, ,
+ NATCHIKULAM HSC
+Natchikulam, ,
+ NAVAMANI NURSINGHOME
+43, TB Road,,Arasaradi,,Madurai.
+ NAVINIPATTI HSC
+Navinipatti, ,
+ NEDUMADURAI HSC
+Nedumadurai, ,
+ NELLUKUNDUPATTI HSC
+Vanchinagaram, ,
+ NETHRAVATHI MEDICAL FOUNDATION AND MULTISPECIALITY HOSPITAL
+NO.33, ALAGAR KOVIL MAIN ROAD,K.PUDUR,MADURAI
+ NILAIYUR HSC
+Nilaiyur, ,
+ NILAIYUR PHC
+Nilaiyur, ,
+ NIRMAL HOSPITAL
+KURUNJI STREET,,SHANTHI NAGAR,,MADURAI
+ NIRMALA GRACE NURSING HOME
+Subramaniyapuram, ,
+ NITHILAA NURSING HOME
+72,TPK MAIN ROAD,PALANGANATHAM,MADURAI, ,
+ NITHILAA NURSING HOME
+Palanganatham, ,
+ NTC HOSPITAL
+187, Thathaneri Main Road,,Vaithiyanathapuram,Madurai
+ NTC HOSPITAL
+187, Thathaneri Main Road,,Vaithiyanathapuram,Madurai
+ Narimedu Urban Primary Health Centre
+Venmani Road,,Sellur,Madurai
+ ODAIPATTI HSC
+Odaipatti, ,
+ OHM SAI SURGICAL & OBSTETRIC CARE
+30, Jawahar St,, Near Aravind Eye Hospital ,Madurai
+ OHMSAI CLINIC
+10, JAWAHAR STREET, GANDHI NAGAR, MADURAI-20, ,
+ OM MURGA HOSPITAL
+Usilampatti, ,
+ OM SAKTHI HOSPITAL
+K.Pudur, ,
+ OM SHANMUGA HOSPITAL
+1/2/199, BY PASS ROAD,PERAIYUR,MADURAI
+ OMSAI HOSPITAL
+Gandhi Nagar, ,
+ OORCHERI HSC
+Oorcheri, ,
+ OORMETCHIKULAM HSC
+Samayanallur, ,
+ OTTAKOVILPATTI HSC
+Kambur, ,
+ OTTAKOVILPATTI HSC
+Vanchinagaram, ,
+ Osho Hospital
+310, MIG Colony,Anna Nagar,Madurai-20.
+ P SUBBULAPURAM HSC
+P SUBBULAPURAM, ,
+ P.THOTTIAPATTI HSC
+P.Thottiapatti, ,
+ PADMALAYA HOSPITAL
+48, Perumal Kovil street,MADURAI,
+ PADMALAYA HOSPITAL
+Subramaniyapuram, ,
+ PALAMEDU HSC 1
+Palamedu, ,
+ PALAMEDU HSC 2
+Palamedu, ,
+ PALAMEDU PHC
+Palamedu, ,
+ PALANGANATHAM CORPORATION MATENITY HOME
+Palanganatham, ,
+ PALANI BALAJI FERTILITY HOSPITAL
+K.Pudur, ,
+ PALLAPATTI HSC
+Pallapatti, ,
+ PAMC HOSPITAL
+Gandhi Nagar, ,
+ PANAIYUR HSC
+Panaiyur, ,
+ PANDIAN ADVANCED MEDICAL CENTRE PVT LTD
+36/1, SIVAGNGAI ROAD, K.K.NAGAR, MADURAI-20, ,
+ PANDIAN HEART INSTITUTE
+43,SHANMUGAM PILLAI 2ND STREET ALAGARADI NEW JAIL ROAD MADURAI , ,
+ PANDIAN HEART INSTITUTE
+Arasaradi, ,
+ PANDIAN HOSPITALS
+Head Post Office North Veli St, ,
+ PANDIAN MULTISPECIALITY HOSPITAL
+45,East Veli Street,,Near New Rajmahal Silk Sarees,,Madurai.
+ PANDIARAJ MATERNITY HOME
+Head Post Office North Veli St, ,
+ PANNIAN HSC
+Pannian, ,
+ PANNIKUNDU HSC
+Pannikundu, ,
+ PAPPAPATTI HSC
+Pappapatti, ,
+ PAPPINAICKANPATTY HSC
+Pappinaickanpatty, ,
+ PAPPINAICKENPATTI HSC
+Pappinaickenpatti , ,
+ PARAIPATTY HSC
+Paraipatty, ,
+ PARAVAI HSC
+Paravai, ,
+ PATTUR HSC
+Pattur, ,
+ PERAIYAMPATTI HSC
+Peraiyampatti, ,
+ PERAIYUR GH
+Peraiyur, ,
+ PERAIYUR HSC
+Peraiyur, ,
+ PERIAPOOLAMPATTI HSC
+Chinnapoolampatti, ,
+ PERUNGAMANALLUR HSC
+Perungamanallur, ,
+ PERUNGUDI HSC
+Perungudi, ,
+ PILAYARNATHAM HSC
+Vayalur, ,
+ PIRAVIAMPATTI HSC
+Kovilangulam, ,
+ PITCHAI SHANMUGAVEL NURSING HOME
+New No- 66,,Sivagangai Road,,Madurai
+ PON HOSPITAL
+Meenambalpuram, ,
+ PONNAMANGALAM HSC
+Ponnamangalam, ,
+ PONNNI HOSPITAL
+Reserve Line, ,
+ POOLAMPATTI HSC
+Poolampatti, ,
+ POONJUTHI HSC
+Poonjuthi, ,
+ POOSALAPURAM HSC
+Poosalapuram, ,
+ POTHAMPATTI HSC
+Pothampatti, ,
+ POTHUMBU HSC
+Pothumbu, ,
+ POTTAPPATTI HSC
+Pottappatti, ,
+ POTTULUPATTI HSC
+Pottulupatti, ,
+ POURPPU METTUPPATTI HSC
+Pourppu Mettuppatti, ,
+ PRASANNA KUMARAN HOSPITAL
+37 , SBI STAFF 1ST COLONY , BYE PASS ROAD ,MADURAI, ,
+ PRASSANNA KUMARAN HOSPITAL
+37,State Bank Staff First Colony,,Bye Pass Road,,Madurai.
+ PREETHA SHREE HOSPITAL
+Thirumangalam, ,
+ PREETHI HOSPITAL
+K.Pudur, ,
+ PREETHI HOSPITAL P LTD
+50, Melur Main Road,Uthangudi,Madurai
+ PREMS P.S. POLY CLINIC
+Jonespuram, ,Pasumalai,Madurai
+ PRIYA CLINIC
+Melur, ,
+ PRIYA HOSPITAL
+Thirumangalam, ,
+ PUDHUTHAMARAIPATTI HSC
+Othakadai, ,
+ PUDUPATTI HSC
+Pudupatti, ,
+ PUDUPATTI PHC
+Pudupatti, ,
+ PUDUSUKKAMPATTI HSC
+Pudusukkampatti, ,
+ PULIMALAIPATTI HSC
+Pulimalaipatti, ,
+ PULIYAMPATTI HSC
+Puliyampatti, ,
+ PULIYAMPATTI HSC
+T.Kallupatti, ,
+ PULIYANKULAM HSC
+Puliyankulam, ,
+ Palanikumaran Speciality Hospital
+24, Pankajam Colony 2nd street,Kamarajar Salai,Madurai
+ Poorna Womens Medical Centre
+Plot No. 127,Swami Viveganandar Nagar, Sambakulam,Madurai
+ QUALITY CARE HOSPITAL
+32,SARVOTHAYA MAIN ROAD,,NEW ELLISNAGAR,,MADURAI
+ R I CORPORATION MATERNNITY HOME
+Munichalai, ,
+ R K MAPLES HOSPITAL
+Plot No 677,4th West Cross Street,,K.K. Nagar,,Madurai.
+ R.R. Hospital
+345, MIG 80 Feet Road,,Anna Nagar,Madurai-20.
+ R.R.HOSPITAL
+345,MIG 80FEET ROAD ANNANAGAR,MADURAI, ,
+ R.R.MISSION HOSPITAL
+Melur, ,
+ RADHA CLINIC
+38 Channel Road,Melur,
+ RAGAVENDHAR HOSPITAL
+36E, KURUVIKARAN SALAI,,MADURAI,
+ RAHAVENDAR HOSPITAL
+36-E, KURUVIKARAN SALAI, MADURAI-9, ,
+ RAILWAY HOSPITAL
+RAILWAY COLONY, MADURAI, ,
+ RAJ HOSPITAL
+Palanganatham, ,
+ RAJA PRIYA HOSPITAL
+K.Pudur, ,
+ RAJAKKAPATTI HSC
+Rajakkapatti, ,
+ RAJAKOOR HSC
+Rajakoor, ,
+ RAJAKOOR PHC
+Rajakoor, ,
+ RAJAMANI HOSPITAL
+3,MEYYAPPAN 3RD STREET GNANAOLIVU[URAM MADURAI , ,
+ RAJAMANI HOSPITAL
+Arasaradi, ,
+ RAJAN HOSPITAL
+155-C, EAST VELI STREET, MADURAI, ,
+ RAJAN HOSPITAL
+Thirumalainanayakar Mahal, ,
+ RAJEEV HOSPITAL
+47, ANNA NAGAR MADURAI, ,
+ RAJEEV HOSPITAL
+Gandhi Nagar, ,
+ RAJKUMAR HOSPITAL
+MEENAKSHI NAGAR, DINDIGUL BY E PASS ROAD, MADURAI - 18., ,
+ RAJKUMAR HOSPITAL
+meenakshi Nagar,Dindugal Byepass Road,Madurai
+ RAKS HOSPITALS Private Limited
+12/59, Kuruvikaran salai, 1st cross street,Cini priya theatre backside,Anna nagar, Madurai
+ RAKSHA HOSPITAL
+Plot No. 130, East 3rd Cross Street,,Anna nagar,Madurai
+ RAKSHANA HOSPITAL
+3. Valarmathi Street,Guru Theatre Near,Madurai
+ RAM PRABHU HOSPITAL
+1A KAVANDANPATTI ROAD,USILAMPATTI,
+ RAM PRABHU HOSPITAL
+Usilampatti, ,
+ RAM PSYCHIATRY HOSPITAL
+338/A&338/1, ANNA NAGAR,NEAR ULAVARSANTHAI,MADURAI
+ RAM PSYCHOLOGY HOSPITAL INSTITUTE
+Gandhi Nagar, ,
+ RAMANA HOSPITAL
+JAYARAJ NAGAR ,ANNA NAGAR ROAD, OPP.FATIMA COLLEGE MADURAI - 18., ,
+ RAMANA HOSPITAL
+Thathaneri, ,
+ RAMANI HOSPITAL
+249/18, APK Main Road,,Villapuram,,Madurai
+ RAMESH NURSING HOME
+Arasaradi, ,
+ RAMYA NEURO HOSPITAL
+169,,LIC Colony, K.K.Nagar,,Madurai
+ RAMYA NEURO HOSPITAL
+169-LAKE VIEW ROAD, K.K.NAGAR, MADURAI, ,
+ RANI ELANGOVAN HOSPITAL
+5/225, THENI MAIN ROAD,NAGAMALAI PUDHUKOTTAI,MADURAI
+ RANJITHAAM NURSING HOME
+PERIYA KADAI VEETHI, MAIN ROAD,SHOLAVANDHAN,MADURAI
+ RASI HOSPITAL
+Thathaneri, ,
+ RATHINA MENTAL HEALTH CENTER
+80 , BYE PASS ROAD ,MADURAI, ,
+ RATHNA MENTAL HEALTH CENTRE
+80, Bye Pass Road,,Madurai.,
+ RAVI NURSING HOME
+Usilampatti, ,
+ RENGARAJ CLINIC
+Y.Othakadai, ,
+ RESHMA HOSPITAL
+Plot 3775,Villapuram Housing Board,Madurai
+ RESHMA HOSPITAL
+Villapuram, ,
+ RESI CLINNIC
+Y.Othakadai, ,
+ RISHAPAM HSC
+Rishapam-VP, ,
+ ROYAL HOSPITAL
+67,D.D.ROAD ARAPPALAYAM,MADURAI,
+ RUBY NURSING HOME
+180/184 C2 P.P. CHAVADI,THENI MAIN ROAD,MADURAI
+ Rajan Clinic
+229, Southmarret street,Madurai ,
+ Raks Hospitals Private Limited
+12/59, Kuruvikaran Salai 1st Street,Anna nagar,Madurai
+ Rio Childrens Hospital
+No. 40/4 c, 2 B1, Vandiyur Bit 1,Ringroad,Madurai
+ Rio Children’s Hospital
+9&10, West Main Road,,Anna Nagar,Madurai-20
+ Rosy Pearl Hospital
+67, bharathi nagar Main Road,Krishnapuram Colony,,Madurai
+ S V R CLINIC
+Subramaniyapuram, ,
+ S.ARASAPATTI HSC
+S.Arasapatti, ,
+ S.K.NURSING HOME
+17, Vinayagar Nagar,,Madurai.,
+ S.K.V HOSPITAL
+Arasaradi, ,
+ S.K.V. MULTI SPECIALITY HOSPITAL
+Old Post Office Street,Usilampatti,
+ S.KEELAPPATTI HSC
+S.Keelappatti, ,
+ S.KOTTAIPATTI HSC
+Sedapatti, ,
+ S.L.HOSPITAL
+Narimedu, ,
+ S.M.R.Womens Care Center
+No.3,S.M Complex,S.M.Nagar,Near Melur Union Office,Melur
+ S.P. Hospital
+HIG-34, 80 Feet Road,Anna Nagar,Madurai-20.
+ S.P.NATHAM HSC
+S.P.Natham, ,
+ S.S HOSPITAL
+Kulamangalam Main Road,,Mudakkathan,,Madurai.
+ SAAM HOSPITAL
+89,,East Marret Street,,Madurai
+ SABARAM HOSPITAL
+54, NEAR OLD PANDIYAN THEATRE, MEENAKSHINAGAR,MADURAI, ,
+ SABARAM HOSPITAL
+Thathaneri, ,
+ SAGAYA ANNAI HOSPITAL
+Anjal Nagar, ,
+ SAI MISSION HOSPITAL
+21, GST Road,Near Poonga Stop, Thirupparamkunram,Madurai
+ SAKKARAPPA NAYAGANUR HSC
+Sakkarappa Nayaganur, ,
+ SAKKILIYANKULAM HSC
+Kovilangulam, ,
+ SAKKIMANGALAM HSC
+Sakkimangalam, ,
+ SAKKIMANGALAM PHC
+Sakkimangalam, ,
+ SAKKUDI HSC
+Sakkudi, ,
+ SAKTHI HOSPITAL
+5-A, Paramasivam Street,,Opposite to Fatima college,Madurai
+ SAKTHI HOSPITAL
+5A Paramasivam Street,Opp.Fatima College,Madurai
+ SAKTHI HOSPITAL
+S.S Colony, ,
+ SAKTHI HOSPITAL
+Thathaneri, ,
+ SALAMA WOMENS CLINIC
+2/694-1, NEHRU STREET,6TH MAIN ROAD, GOMATHIPURAM,MADURAI
+ SAMAYANALLUR CHC
+Samayanallur, ,
+ SAMAYANALLUR HSC
+Samayanallur, ,
+ SANA MATERNITY WOMENS HEALTH CARE HOSPITAL
+2/B3, 16W, MADURAI TRICHY MAIN ROAD,OPP, TO UNION OFFICE, MOOVENDHER NAGAR, MELUR TK,,MADURAI DT.
+ SANAMPATTI HSC
+T.Vadipatti, ,
+ SANDHEEP MEMORIAL HOSPITAL
+96, Palace Road,,Madurai.,
+ SANDHIYA HOSPITAL
+Arasaradi, ,
+ SANKAR HOSPITAL
+Thirumalainanayakar Mahal, ,
+ SANKAR NURSING HOME
+18, PANTHADI 1ST STREET, MADURAI, ,
+ SANTHAIYUR HSC
+Santhaiyur, ,
+ SANTHAIYUR PHC
+Santhaiyur, ,
+ SANTHARAM HOSPITAL
+172, SOUTH MASI STREET,MADURAI,
+ SANTHI HOSPITAL
+Thirumalainanayakar Mahal, ,
+ SANTHOSH CLINIC
+3B,OLD KUYAVAR PALAYAM ROAD,MADURAI,
+ SAPTUR I HSC
+Saptur I, ,
+ SAPTUR II HSC
+Saptur II, ,
+ SAPTUR PHC
+Saptur, ,
+ SARADHA HOSPOITAL
+Palace Road, ,
+ SARAVANA MULTISPECIALITY HOSPITAL
+7A, Maruthu Pandiar Street,,4th Main Road,Narimedu,,Madurai
+ SARUGUVALAYAPATTI HSC
+Saruguvalayapatti, ,
+ SATHANGUDI HSC
+Sathangudi, ,
+ SATHANGUDI PHC
+Sathangudi, ,
+ SATHARS HOSPITAL
+23-A, Second Street, Kuruvikkaran Salai, ,Anna Nagar,Madurai
+ SATHARS HOSPITAL
+23-A,SECOND STREET,KURUVIKARAN SALAI,ANNANAGAR,MADURAI, ,
+ SATHIRAPATTI HSC
+sathirapatti , ,
+ SATHIYA HOSPITAL
+Arasaradi, ,
+ SEDAPATTI HSC
+Sedapatti, ,
+ SEDAPATTI PHC
+Sedapatti, ,
+ SEETHA CLINIC
+Melur, ,
+ SEKKIPATTI HSC
+Sekkipatti, ,
+ SEKKIPATTI PHC
+Sekkipatti, ,
+ SELLUR CORPORATION MATERNITY HOME
+Sellur, ,
+ SELVAM HOSPITAL
+119, CHITRAKARA STREET,MADURAI,
+ SELVIRAM TRUST CLINIC
+Melur, ,
+ SEMINIPATTI HSC
+Seminipatti, ,
+ SENGAPADAI HSC
+Sengapadai, ,
+ SENNAKARAMPATTI HSC
+Sennakarampatti, ,
+ SENTHAMANGALAM HSC
+Senthamangalam, ,
+ SETHU HOSPITAL
+Subramaniyapuram, ,
+ SETHU SARATHA HOSPITAL
+409,CHURCH ROAD,ANNANAGAR,MADURAI, ,
+ SHANTHI CLINIC
+Palanganatham, ,
+ SHASTHA KIDNEY & MULTI SPECIALITY HOSPITAL
+Telecom Nagar,Valar Nagar,Madurai
+ SHENBAGAM HOSPITAL
+15,16 NORTH CROSS 3RD STREET ANNA NAGAR, MADURAI, ,
+ SHIFA HOSPITAL
+Villapuram, ,
+ SHIVAM HOSPITAL
+5, Bharathi Street,Tirumangalam,
+ SHOLAVANDAN I HSC
+T.Vadipatti, ,
+ SHREE KAMATCHI HOSPITAL
+Usilampatti, ,
+ SHREE NURSING HOME
+Pettai Pudur ,T.Vadipatti,Madurai
+ SHREE NURSING HOME
+T.VADIPATTI,MADURAI,
+ SHRI ANNAI HOSPITAL
+Thirumangalam, ,
+ SHRI BALAJI HOSPITAL
+Opp. Taluk Office,Main Road, Melur,
+ SHRI KRISHNA HOSPITAL
+SHRI KRISHNA HOSPITAL,MUNSIF COURT ROAD,TIRUMANGALAM
+ SHRI MEENAKSHI
+SLC 216-CHURCH ROAD, ANNA NAGAR, MADURAI, ,
+ SHRI PUTHRA HOSPITAL
+No.621, 15th Street,,Bharathipuram, Karuppayurani,,Madurai
+ SHRI SAI HOSPITAL
+Plot No.2,,SBI Colony,Ponmeni Bypass Road,,,Madurai.
+ SILAIMALAIPATTI HSC
+Silaimalaipatti , ,
+ SIVAJOTHI NURSING HOME
+IRAVATHANALLOOR,NEW RAMNAD ROAD,MADURAI
+ SIVARAKOTTAI HSC
+Sivarakottai, ,
+ SKG Multispeciality Hospital
+19/1, Chinnamani Street,Jawahar Nagar,Tirumangalam
+ SOLANKURUNI HSC
+Solankuruni, ,
+ SOLAVANDAN GH
+Sholavandan, ,
+ SOLAVANDAN II HSC
+Sholavandan, ,
+ SOLAVANDAN III HSC
+Sholavandan, ,
+ SOLAVANDAN IV HSC
+Sholavandan, ,
+ SOOLAPPURAM HSC
+Soolapuram, ,
+ SREE HOSPITAL
+Arasaradi, ,
+ SREE MADHU CLINIC
+1/590-2, Tagote Nagar 2nd Street,Thillai sivam Mandapam Back side,Thiruppalai, Madurai
+ SREE SANKAR CLINIC
+1A Ilayaraja Street,Meenakshi Nagar, ,Villapuram, Madurai
+ SREE VIJAY HOSPITALS
+73/3 SIVAGANGAI MAIN ROAD,VEERAPANJAN,KARUPPAYURANI
+ SRI BALAJI CLINIC
+Arasaradi, ,
+ SRI BALAJI CLINIC
+Harvey Nagar 3rd Street, Gnanaolivupuram, Madurai, ,
+ SRI BALAJI HOSPITAL
+NO.12, Thiruvalluvar Nagar,Near Agriculture College, Y.Othakadai,Madurai
+ SRI BHUVANESHWARI HOSPITAL
+96, Mariyamman Kovil Street,K.Pudur,Madurai
+ SRI HARI HOSPITAL
+Plot No. 11, PKM Nagar,13th Cross Street, Karupayoorani ,Madurai
+ SRI HOSPITAL
+Melur, ,
+ SRI HOSPITAL
+Plot No 312, Karpaga Nagar 5th Street,K Pudur, Madurai.,
+ SRI LAKSHMI HOSPITAL
+210A,BYE PASS ROAD,,PETHANIYAPURAM,,MADURAI
+ SRI NIVASA HOSPITAL
+164, BYE PASS ROAD,,MADURAI,
+ SRI PALANI PARVATHY HOSPITAL
+71,Thamarai Street,,Ayyappan Nagar,,Ayyar Bungalow, Madurai.
+ SRI RAJAN ORTHO HOSPITAL
+64, T.B. Road,,Arasaradi,,Madurai.
+ SRI RAJAN ORTHO HOSPITAL
+64, TB Road,,Mahaboopalayam,Madurai.
+ SRI RAJAN ORTHO HOSPITAL
+NO 64,T B ROAD MAHABOOBPALAYAM MADURAI , ,
+ SRI RENGA HOSPITAL
+No.20 Temple Garden,,ValarNagar Main Road, Uthangudi,Madurai
+ SRI SANKAR CLINIC
+14, Eliyaraja street,,Villapuram,,Madurai
+ SRI SARADHA HOSPITAL
+25, Doak Nagar,,Kochadai,,Madurai.
+ SRI SASTHA HOSPITAL
+No.5, Visuvasapuri 3rd Street,gnanaolivupuram, Arapalayam,Madurai
+ SRI SHANMUGA NURSING HOME
+Melur, ,
+ SRI SHANMUGA NURSING HOME
+No. 3, Azad Street,Gandhi Nagar, Near Anna Bus stand,Madurai
+ SRI THILAGAM MULTI SPECIALITY HOSPITAL
+36, GATE KADAI,SUGAR MILL ROAD,ALANGANALLUR,MADURAI
+ SRI UMAYAAL HOSPITAL
+K.Pudur, ,
+ SRI VALLIYAMMAL HOSPITAL
+80,P.P.CHAVADI,,THENI MAIN ROAD,,Madurai.
+ SRI VENKATESWARA CLINIC
+USILAMPATTI ROAD,PERAIYUR, ,
+ SRI VINAYAGA MULTISPECIALITY HOSPITAL
+ABBAS NAGAR ,PERAIYUR,
+ SRI VISHALAKSHI HOSPITAL
+34/35, OLD EAST MADURAI STATION ROAD, MADURAI, ,
+ SRI VISHALAKSHI HOSPITAL
+Munichalai, ,
+ SRI.KRISHNA CHILDRAN
+Head Post Office North Veli St, ,
+ SRINIVAS CLINIC
+MADURAI MAIN ROAD,T.KALLUPATTI,
+ SRINIVASA HI TECH MULTISPECIALITY HOSPITAL
+7A. Kalpalam Road,,Sellur,Madurai
+ SRINIVASA MATERNITY HOSPITAL
+Thiruppalai, ,
+ SRK HOSPITAL
+47, Akkayanaicker Thoppu,,Ansari Nagar 7th Street,,Mappalayam, Madurai.
+ SRK Hospital
+47, Akkanayakar Thoppu Street,Ansari nagar, 7th Street,Madurai
+ SRP CORPORATION MATERNNITY HOME
+32 - 33, JR Road,,Sundarajapuram,,Madurai
+ SS Kidney Care Centre
+20, Kuruvi karan salai 3rd cross road,ANNA NAGAR,Madurai
+ ST.ANTONY HOSPITAL
+2/50,SARVOTHAYA MAIN ROAD NEW,,ELLISNAGAR,,MADURAI
+ ST.JOHN HEALTH CARE CENTER
+ST.JOHN HEALTH CARE CENTER MAIN ROAD,,T.VADIPATTI,MADURAI
+ ST.MARY OF LEUCE HOSPITAL
+K.Pudur, ,
+ STAR HOSPITAL
+71 B,Narimedu Main Road,,Narimedu,,Madurai.
+ SUBA SREE HOSPITAL
+6, KURUVIKARAN SALAI,Gandhi Nagar, Near Anna Bus stand,Madurai
+ SUBA SREE HOSPITAL
+6, KURUVIKARAN SALAI, GANDHI NAGAR, (NEAR ANNA BUS STAND),MADURAI-20, ,
+ SUBAM CLINIC
+Y.Othakadai, ,
+ SUBAM HOSPITAL
+23,,MELAPONNAGARAM MAIN ROAD,,MADURAI
+ SUBASRI HOSPITAL
+Gandhi Nagar, ,
+ SUBBU CLINIC
+K.Pudur, ,
+ SUBHAM HOSPITAL
+47, Chinnamani Street,Jawahar Nagar,Tirumangalam
+ SUBIKSHAM SPECIALITY HOSPITAL
+2/499,JPS COMPLEX ,MELUR MAIN ROAD,OTHAKADAI,MADURAI
+ SUBURAJA HOSPITAL
+Thirumalainanayakar Mahal, ,
+ SUGAPRIYA HOSPITAL
+Park Area,,Lake View road,,K.K. Nagar, Madurai.
+ SUGUNA HOSPITAL
+Silaiman , ,
+ SUHAM SPECIALITY HOSPITAL
+99/47, T.B Road,,Opp ESI Hospital,,Mahaboopalayam, Madurai.
+ SUHAM SPECIALITY HOSPITAL
+DOOR NO 47 A, OLD NO.99/47 B, T.B.ROAD ,MAHABOOPALAYAM,MADURAI
+ SUHAM SPECIALITY HOSPITAL
+DOOR NO 47 A, OLD NO.99/47 B, T.B.ROAD ,MAHABOOPALAYAM,MADURAI
+ SUHAM SPECIALITY HOSPITAL
+Thathaneri, ,
+ SUKKAMPATTI HSC
+Vanchinagaram, ,
+ SUMA HOSPITAL
+Thirumangalam, ,
+ SUMATHI HOSPITAL
+1-8,sathiyamoorthy main 1st cross street,meenambalpuram,madurai-625002, ,
+ SUMATHI HOSPITAL
+334A, ANNA NAGAR MADURAI, ,
+ SUMATHI HOSPITAL
+Sellur, ,
+ SUNDARAM HOSPITAL
+21/6, Janagi Narayanan Street,,S.S. Colony,,Madurai.
+ SUNDARAM SCANS
+10, PTR Road Narimedu,, ,Madurai
+ SUNGURAMPATTI HSC
+Vadagarai, ,
+ SUPRAJAA NURSING HOME
+238/112-A, EAST PERUMAL MAISTRY STREET, MADURAI, ,
+ SURYA HOSPITAL
+24L, Old Kuyavar Palayam Road,Madurai ,
+ SUTHANTHIRANAGAR HSC
+Y.Othakadai, ,
+ Saalama Women Hospital
+2/209, 2nd Main Road,Gomathipuram,Madurai
+ Saroja Memorial M.M. Clinic
+4/703, Vandiyur Main Road,,Sadhasiva Nagar,Madurai-20.
+ Sathamangalam Urban primary Health Centre
+1st Cross Street, Cini Priya Theater Road,Kuruvikaran salai, Sathamangalam,Madurai
+ Sethu Saratha Hospital
+409, Church Road,Anna Nagar,Madurai-20.
+ Shameem Gastro Hospital
+5/39, Indira Street, Yanaikulai Junction,Near BPM School, Anna nagar,Madurai
+ Shenbagam Hospital
+Anna Nagar,,Madurai-20.,
+ Solomon Clinic
+7/280 Solomon Complex,Theni Main Road,N.P.Kottai Madurai
+ Sri Kandeepan Nursing Home
+9/1/245,Main Road,Vadipatti,Madurai
+ Sri Meenakshi Hospital
+SLC, 216, CHURCH ROAD,ANNA NAGAR,MADURAI
+ Sumathi Hospital
+Anna Nagar,Madurai-20.,
+ T.KALLUPATTI HSC
+T.Kallupatti, ,
+ T.KALLUPATTI CHC
+T.Kallupatti, ,
+ T.KRISHNAPURAM HSC
+T.Krishnapuram, ,
+ T.KUNNATHUR 1 BIT HSC
+T.Kunnathur 1 Bit, ,
+ T.METTUPATTY HSC
+T.Mettupatty, ,
+ T.RAMANATHAPURAM HSC
+Thirumanickam, ,
+ T.RAMANATHAPURAM PHC
+T.Ramanathapuram, ,
+ T.VADIPATTI G H
+T.Vadipatti, ,
+ T.VADIPATTI HSC
+T.Vadipatti, ,
+ TAJ HOSPITAL
+482, K.K. Nagar,,Madurai.,
+ THADAIYAMPATTI HSC
+Thadayampatti, ,
+ THANAKKANKULAM PHC
+Thanakkankulam, ,
+ THANGAIAH NADAR PONNAMMAL HOSPITAL
+Head Post Office North Veli St, ,
+ THANGALACHERI HSC
+Thangalacheri, ,
+ THANICHIYAM HSC
+Thanichiyam, ,
+ THANIYAMANGALAM HSC
+Thaniyamangalam, ,
+ THANIYAMANGALAM PRIMARY HEALTH CENTER
+THANIYAMANGALAM PHC,MADURAI,
+ THATHAMPATTI HSC
+T.Vadipatti, ,
+ THAVAM HOSPITAL
+150/1 KAMARAJAR SALAI ,NEAR MARIYAMMAN KOVIL ,,THEPPAKULAM
+ THAVAM HOSPITAL
+12. KARPAGA NAGAR,K PUDUR, OPPOSITE TO AYYAPPAN TEMPLE,MADURAI
+ THE CHRISTIAN MISSION HOSPITAL
+129, EAST VELI STREET, MADURAI, ,
+ THE LANDMARC HOSPITAL
+128, SANTHI NAGAR, PARASURAMPATTI,K.PUDUR,MADURAI
+ THE TURNING POINT INDIA
+66, CUSTOMS COLONY, AATHIKULAM MAIN ROAD, RESERVE LINE, MADURAI, ,
+ THEMBAVANI HOSPITAL
+15, A.A.ROAD, GNANAOLIPURAM,,ARAPPALAYAM,,MADURAI
+ THENPALANJI HSC
+Vadapalanji, ,
+ THENUR HSC
+Thenur, ,
+ THERKUTHERU HSC
+Therkutheru, ,
+ THERKUTHERU PHC
+Therkutheru, ,
+ THETHUR HSC
+Thethur, ,
+ THIDEERNAGAR CORPORATION MATERNITY HOME
+Mela veli veedhi,Thiruparankundram road,Madurai
+ THILLAI BOOMI NURSING HOME
+14,sathiyamoorthy 6thnstreet,meenambalpuram,madurai-625002, ,
+ THILLAI BOOMI NURSING HOME
+Sellur, ,
+ THIMMANATHAM HSC
+Thimmanatham, ,
+ THIRUMAL HSC
+Thirumal, ,
+ THIRUMANGALAM GOVT. HOSPITAL
+Thirumangalam, ,
+ THIRUMANGALAM URBAN PHC
+Thirumangalam, ,
+ THIRUMOHUR HSC
+Thirumohur, ,
+ THIRUNAGAR HOSPITAL
+Thirunagar, ,
+ THIRUPPARANKUNDRAM GH
+Thirupparankundram, ,
+ THIRUSENTHILANDAVAR HOSPITAL
+Usilampatti, ,
+ THIRUVADAVOOR HSC
+Thiruvadavoor, ,
+ THIRUVADAVOOR PHC
+Thiruvadavoor, ,
+ THIRUVEDAGAM HSC
+Thiruvedagam, ,
+ THODANERI HSC
+Thodaneri, ,
+ THUMBAIPATTI HSC
+Thumbaipatti, ,
+ THUMBAIPATTI PHC
+Thumbaipatti, ,
+ THUMMAKUNDU HSC
+Thummakundu, ,
+ THUMMAKUNDU PHC
+Thummakundu, ,
+ THUVARIMAN PHC
+Thuvariman, ,
+ The Turning Point India
+66, Customs Colony, ,Athikulam Main Road,Madurai
+ Thirupalai Urban Primary Health Centre
+GR Nagar,Thiruppalai,MADURAI
+ UCHAPATTI HSC
+Ariyapatti, ,
+ URANGAMPATTI HSC
+Urangampatti, ,
+ URAPPANUR HSC
+Urappanur, ,
+ URBAN PRIMARY HEALTH CENTER PYKARA
+URBAN PRIMARY HEALTH CENTER,E.B.MAIN ROAD,PYKARA,MADUARAI, ,
+ URBAN PRIMARY HEALTH CENTRE
+D2D2 ROAD, BALARENGAPURAM, MADURAI, ,
+ URBAN PRIMARY HEALTH CENTRE
+MASTHANPATTI, KABEER NAGAR,ANDARKOTTARAM PO,MADURAI
+ URBAN PRIMARY HEALTH CENTRE
+THERKUVASAL, MADURAI, ,
+ URBAN PRIMARY HEALTH CENTRE THIRUNAGAR
+94 WARD OFFICE ,GANDHIJI MAIN STREET, 8TH STOP THIRUNAGAR,MADURAI, ,
+ URBAN PRIMARY HEALTH CENTRE THIRUPPARANKUNDRAM
+URBAN PRIMARY HEALTH CENTRE,THIYAGARAJAR ENGINEERING COLLEGE ROAD THIRUPPARANKUNDRAM,MADURAI, ,
+ USHA CLINIC
+2C/2, 50 Feet Road,,Sellur,,Maudrai
+ USILAMPATTI GOVT. HQ HOSPITAL
+Usilampatti, ,
+ USILAMPATTI URBAN PHC
+Usilampatti, ,
+ UTCHAPATTI HSC
+Utchapatti, ,
+ UTHAPPANAYAKKANUR HSC
+Uthappanayakkanur, ,
+ UTHAPPANAYAKKANUR PHC
+Uthappanayakkanur, ,
+ UTHAPURAM HSC
+Uthapuram, ,
+ UTHUKULI HSC
+Uthukuli , ,
+ Urban Primary Health Centre
+Madurai Corporation,MADURAI,
+ Urban Primary Health Centre, Avaniyapuram.
+Old Municipality Office,,Near Bus Stand, Avaniyapuram.,
+ Urban Primary Health Centre, Avaniyapuram.
+Old Municipality Office, Near Bus Stand,,Avaniyapuram.,
+ Urban primary health centre
+Chinthamani,madurai,
+ Urban primary health centre
+Thirunagar,Madurai,
+ V R HOSPITAL
+11D PRASAD ROAD,NARIMEDU, NEAR CSI CHURCH NEHRU SCHOOL,MADURAI
+ V.NEETHI ARASU NEURO HOSPITAL
+29-A, Sivagangai Road,,Madurai.,
+ V.R.HOSPITAL
+Narimedu, ,
+ V.REDDIRAPATTI HSC
+V.Reddirapatti, ,
+ VADAKAMPATTI HSC
+Kalligudi, ,
+ VADAMALAIYAN HOSPITAL
+Therkku vasal , ,
+ VADAMALAYAN HOSPITAL
+9A. Vallabai Road, Chokkikulam, ,Madurai
+ VADUGAPATTI HSC
+Vadugapatti, ,
+ VAGAIKULAM HSC
+Vagaikulam, ,
+ VAGURANI HSC
+Vagurani, ,
+ VAIKAM PERIYAR NAGAR HSC
+Perungudi, ,
+ VALANDUR HSC
+Valandur, ,
+ VALAYANKULAM CHC
+Valayankulam, ,
+ VALAYANKULAM HSC
+Valayankulam, ,
+ VALAYAPATTI HSC
+Valayapatti, ,
+ VALE HOSPITAL
+45,First Floor, Kuruvikaran Salai,,Anna Bus Stand,,Madurai.
+ VANCHINAGARAM HSC
+Vanchinagaram, ,
+ VANDAPULI HSC
+Vandapuli, ,
+ VANDIYUR URBAN PRIMARY HEALTH CENTRE
+24, LIG COLONY,ANNA NAGAR,MADURAI
+ VANNIVELAMPATTI HSC
+Vannivelampatti , ,
+ VARICHIYUR HSC
+Varichiyur, ,
+ VASAN EYE HOSPITAL
+Arasaradi, ,
+ VEDAR PULIYANKULAM HSC
+Vedar Puliyankulam, ,
+ VEERAPPERUMAL PURAM HSC
+Veerapperumal puram, ,
+ VEL HOSPITAL
+No. 1/2A, 3rd Street, ,Anjal Nagar,Madurai
+ VELAMALAIPATTI HSC
+Nadupatti, ,
+ VELAMMAL MEDICAL COLLEGE AND HOSPITAL
+VELAMMAL VILLAGE MADURAI-TUTICORIN RING ROAD,,ANUPPANADI,,Madurai
+ VELLALOOR CHC
+Vellaloor, ,
+ VELLALOOR HSC
+Vellaloor, ,
+ VELLARIPATTI HSC
+Vellaripatti, ,
+ VELLIANKUNDRAM HSC
+Appanthirupathy, ,
+ VELU HOSPITAL
+99 MUNISIF COURT ROAD,TIRUMANGALAM,
+ VENKATESWARA HOSPITAL
+30, KAKKAN STREET, SHENOY NAGAR, MADURAI, ,
+ VENKATESWARA HOSPITAL
+Gandhi Nagar, ,
+ VICTORY HOSPITAL
+Arasaradi, ,
+ VIDATHAKULAM HSC
+Vidathakulam, ,
+ VIJAY NURSING HOME
+17, vetri vinayagar koil Street,Pankajam Colony, Madurai-9, ,
+ VIJAYA HOSPITAL
+1A, P.P.CHAVADI,,MADURAI,
+ VIJAYA HOSPITAL
+55-A, MELAPONNAGARAM,,7TH STREET,,MADURAI
+ VIJAYA HOSPITAL
+Palace Road, ,
+ VIJAYALAKSHMI HOSPITAL
+7/23 OTTRAI AGHRAHARAM,SHOLAVANDAN,MADURAI
+ VIJAYARAJ MULTI SPECIALITY HOSPITAL
+162A. P.P. CHAVADI,,MADURAI,
+ VIKKIRAMANGALAM HSC
+Vikkiramangalam, ,
+ VIKKIRAMANGALAM PHC
+Vikkiramangalam, ,
+ VILACHERY HSC
+Vilachery, ,
+ VILLUR HSC
+Villur, ,
+ VILLUR PHC
+Villur, ,
+ VIMALA HOSPITAL
+33, Alagar Kovil Main Road,,K.Pudur,,Madurai
+ VINAYAGA HOSPITAL
+10, Rathakrishnan street,,Madurai,
+ VINAYAGAM HOSPITAL
+Palace Road, ,
+ VINAYAGAM NURSING HOME
+Usilampatti, ,
+ VIRAGANUR HSC
+Viraganur, ,
+ VIRATHANUR HSC
+Virathanur, ,
+ VIRATHANUR PHC
+Virathanur, ,
+ VISAKA HOSPITAL
+Head Post Office North Veli St, ,
+ VISWA HOSPITAL
+Therkku vasal , ,
+ VIYAY NURSING HOME
+17,19,VETRI VINAYAGAR KOVIL STREET,,PANKAJAM COLONY,,MADURAI
+ Vikram Hospital
+781,,Anna Nagar,Madurai-20.
+ Vikram Multi Speciality Hospital
+3/424, Ring Road, Near Pandi Koil Road,Madurai-20.,
+ Villapuram Urban Primary Health Centre
+49, Villapuram Main Road,Villapuram,Madurai
+ Virattipathu Urban Primary Health Centre
+Theni Main Road,Near Taluk Office,Madurai
+ WOMENS HEALTH CARE HOSPITAL
+131, East Velli Street,MADURAI,
+ Y.OTHAKADAI HSC
+Y.Othakadai, ,
+ Y.OTHAKADAI PHC
+Y.Othakadai, ,
+ hirupparankundram Urban Primary Health Centre
+KOODAL MALAI STREET,NEAR WARD OFFICE,Thirupparankundram, Madurai
+
+"""
+# change the district name 
+def lookup_pincode(place, district_filter='Madurai'):
+    url = f"https://api.postalpincode.in/postoffice/{place}"
+    try:
+        print(f"Looking up pincode for place: '{place}'")
+        resp = requests.get(url, timeout=5)
+        data = resp.json()
+        
+        if data and data[0]['Status'] == 'Success':
+            # Filter PostOffices to Tamil Nadu and based on the specific district
+            filtered_postoffices = [
+                po for po in data[0]['PostOffice']
+                if po['State'].lower() == 'tamil nadu' and po['District'].lower() == district_filter.lower()
+            ]
+            
+            if filtered_postoffices:
+                pincode = filtered_postoffices[0]['Pincode']
+                print(f"Found pincode '{pincode}' for place '{place}' in Tamil Nadu, district '{district_filter}'")
+                return pincode
+            else:
+                print(f"No post office found for '{place}' in Tamil Nadu, district '{district_filter}'")
+        else:
+            print(f"No pincode found for place: '{place}'")
+    except Exception as e:
+        print(f"Error fetching pincode for '{place}': {e}")
+    return ''
+
+
+def extract_place_name(address, fallback=''):
+    words = re.split(r'[,\s]+', address)
+    for word in reversed(words):
+        if len(word) > 3 and not word.isdigit() and not re.match(r'^\d+[A-Z]?', word):
+            return word.strip()
+    return fallback.strip()
+
+
+def process_hospital_data(raw_text, output_file="Madurai.xlsx"):
+    lines = [line.strip() for line in raw_text.strip().split('\n') if line.strip()]
+    cleaned_data = []
+
+    # avoid duplicate lookups
+    pincode_cache = {}
+
+    for i in range(0, len(lines), 2):
+        name = lines[i]
+        address_raw = lines[i + 1] if i + 1 < len(lines) else ''
+
+        # Extract phone number
+        phone_match = re.search(r'(\d{5}[-]?\d{5,6}|\d{10})', address_raw)
+        phone = phone_match.group(0) if phone_match else ''
+
+        # Extract pincode directly from address
+        pincode_match = re.search(r'\b6\d{5}\b', address_raw)
+        pincode = pincode_match.group(0) if pincode_match else ''
+
+        # Clean address
+        address = re.sub(r'(\d{5}[-]?\d{5,6}|\d{10}|\b6\d{5}\b)', '', address_raw)
+        address = re.sub(r'[^\w\s,.-]', '', address).strip()
+
+        # If no pincode, try to resolve using place name
+        if not pincode:
+            place_name = extract_place_name(address, fallback=name.split()[0])
+            print(f"🔍 Extracted place name: '{place_name}' from address: '{address}'")
+
+            if place_name in pincode_cache:
+                pincode = pincode_cache[place_name]
+                print(f"📦 Using cached pincode '{pincode}' for place '{place_name}'")
+            else:
+                pincode = lookup_pincode(place_name)
+                pincode_cache[place_name] = pincode
+
+        cleaned_data.append([name, address, pincode, phone])
+
+    # Save to Excel
+    df = pd.DataFrame(cleaned_data, columns=["Hospital Name", "Address", "Pincode", "Phone"])
+    df.to_excel(output_file, index=False)
+    print(f"✅ Saved cleaned data to: {output_file}")
+    return df
+
+
+if __name__ == "__main__":
+    process_hospital_data(raw_text)
